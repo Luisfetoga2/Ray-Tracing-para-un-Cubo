@@ -44,6 +44,12 @@ class vec3 {
         return e[0]*e[0] + e[1]*e[1] + e[2]*e[2];
     }
 
+    bool near_zero() const {
+        // Return true if the vector is close to zero in all dimensions.
+        auto s = 1e-8;
+        return (std::fabs(e[0]) < s) && (std::fabs(e[1]) < s) && (std::fabs(e[2]) < s);
+    }
+
     static vec3 random() {
         return vec3(random_double(), random_double(), random_double());
     }
@@ -103,6 +109,14 @@ inline vec3 unit_vector(const vec3& v) {
     return v / v.length();
 }
 
+inline vec3 random_in_unit_disk() {
+    while (true) {
+        auto p = vec3(random_double(-1,1), random_double(-1,1), 0);
+        if (p.length_squared() < 1)
+            return p;
+    }
+}
+
 inline vec3 random_unit_vector() {
     while (true) {
         auto p = vec3::random(-1,1);
@@ -119,5 +133,27 @@ inline vec3 random_on_hemisphere(const vec3& normal) {
     else
         return -on_unit_sphere;
 }
+
+inline vec3 reflect(const vec3& v, const vec3& n) {
+    return v - 2*dot(v,n)*n;
+}
+
+inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
+    auto cos_theta = std::fmin(dot(-uv, n), 1.0);
+    vec3 r_out_perp =  etai_over_etat * (uv + cos_theta*n);
+    vec3 r_out_parallel = -std::sqrt(std::fabs(1.0 - r_out_perp.length_squared())) * n;
+    return r_out_perp + r_out_parallel;
+}
+
+inline vec3 rotate(const vec3& v, double angleX, double angleY, double angleZ) {
+    // Rotate the vector v around the x, y, and z axes by angles angleX, angleY, and angleZ respectively.
+    vec3 rotated_v = v;
+    rotated_v = vec3(rotated_v.x(), rotated_v.y() * cos(angleX) - rotated_v.z() * sin(angleX), rotated_v.y() * sin(angleX) + rotated_v.z() * cos(angleX));
+    rotated_v = vec3(rotated_v.x() * cos(angleY) + rotated_v.z() * sin(angleY), rotated_v.y(), -rotated_v.x() * sin(angleY) + rotated_v.z() * cos(angleY));
+    rotated_v = vec3(rotated_v.x() * cos(angleZ) - rotated_v.y() * sin(angleZ), rotated_v.x() * sin(angleZ) + rotated_v.y() * cos(angleZ), rotated_v.z());
+    return rotated_v;
+}
+
+
 
 #endif

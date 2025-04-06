@@ -4,46 +4,47 @@
 #include "hittable.h"
 #include "rtweekend.h"
 
+vec3 rotate_vector(const vec3& v, double angleX_, double angleY_, double angleZ_) {
+    // Rotate around the X-axis
+    double cosX = cos(angleX_);
+    double sinX = sin(angleX_);
+    vec3 rotatedX(
+        v.x(),
+        v.y() * cosX - v.z() * sinX,
+        v.y() * sinX + v.z() * cosX
+    );
+
+    // Rotate around the Y-axis
+    double cosY = cos(angleY_);
+    double sinY = sin(angleY_);
+    vec3 rotatedY(
+        rotatedX.x() * cosY + rotatedX.z() * sinY,
+        rotatedX.y(),
+        -rotatedX.x() * sinY + rotatedX.z() * cosY
+    );
+
+    // Rotate around the Z-axis
+    double cosZ = cos(angleZ_);
+    double sinZ = sin(angleZ_);
+    vec3 rotatedZ(
+        rotatedY.x() * cosZ - rotatedY.y() * sinZ,
+        rotatedY.x() * sinZ + rotatedY.y() * cosZ,
+        rotatedY.z()
+    );
+
+    return rotatedZ;
+}
+
 class cube : public hittable {
   public:
-    cube(const point3& center_, double side_length_, double angleX_, double angleY_, double angleZ_):
+    cube(const point3& center_, double side_length_, double angleX_, double angleY_, double angleZ_, shared_ptr<material> mat_):
     center(center_),
     side_length(std::fmax(0,side_length_)),
     angleX(angleX_),
     angleY(angleY_),
-    angleZ(angleZ_)
+    angleZ(angleZ_),
+    mat(mat_)
     {}
-
-    vec3 rotate_vector(const vec3& v, double angleX_, double angleY_, double angleZ_) const {
-        // Rotate around the X-axis
-        double cosX = cos(angleX_);
-        double sinX = sin(angleX_);
-        vec3 rotatedX(
-            v.x(),
-            v.y() * cosX - v.z() * sinX,
-            v.y() * sinX + v.z() * cosX
-        );
-    
-        // Rotate around the Y-axis
-        double cosY = cos(angleY_);
-        double sinY = sin(angleY_);
-        vec3 rotatedY(
-            rotatedX.x() * cosY + rotatedX.z() * sinY,
-            rotatedX.y(),
-            -rotatedX.x() * sinY + rotatedX.z() * cosY
-        );
-    
-        // Rotate around the Z-axis
-        double cosZ = cos(angleZ_);
-        double sinZ = sin(angleZ_);
-        vec3 rotatedZ(
-            rotatedY.x() * cosZ - rotatedY.y() * sinZ,
-            rotatedY.x() * sinZ + rotatedY.y() * cosZ,
-            rotatedY.z()
-        );
-    
-        return rotatedZ;
-    }
     
 
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
@@ -99,6 +100,7 @@ class cube : public hittable {
         // Rotate the normal back to world space
         vec3 world_normal = rotate_vector(normal, angleX, angleY, angleZ);
         rec.set_face_normal(r, world_normal);
+        rec.mat = mat;
         return true;
     }
 
@@ -108,6 +110,7 @@ class cube : public hittable {
     double angleX;
     double angleY;
     double angleZ;
+    shared_ptr<material> mat;
 };
 
 #endif
